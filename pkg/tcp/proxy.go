@@ -37,6 +37,12 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 		return
 	}
 
+	err = imposeStartTLSPostgresClient(connBackend)
+	if err != nil {
+		log.Error("Error while starttls handshake: %v", err)
+		return
+	}
+
 	// maybe not needed, but just in case
 	defer connBackend.Close()
 

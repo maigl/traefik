@@ -22,11 +22,14 @@
 # Optional
 # Default:
 [entryPoints]
+  [entryPoints.traefik]
+    address = ":9000"
+
   [entryPoints.web]
-    address = ":80"
+    address = ":8000"
 
   [entryPoints.websecure]
-    address = ":443"
+    address = ":8443"
 
 ################################################################
 # Traefik logs configuration
@@ -44,7 +47,7 @@
   # Optional
   # Default: "ERROR"
   #
-  # level = "DEBUG"
+  level = "DEBUG"
 
   # Sets the filepath for the traefik log. If not specified, stdout will be used.
   # Intermediate directories are created if necessary.
@@ -149,4 +152,8 @@
   # Optional
   # Default: true
   #
-  # exposedByDefault = false
+  # exposedByDefaul[providers]
+
+[providers.file]
+  filename = "traefik.dyn.toml"
+
