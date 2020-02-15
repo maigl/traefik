@@ -1,5 +1,5 @@
 
-## Dynamic configuration
+# Dynamic configuration
 [tcp.routers]
   [tcp.routers.Router-1]
     rule = "HostSNI(`cockroach.cmapi.rx-c16.app.corpintra.net`)"
@@ -7,8 +7,8 @@
     [tcp.routers.Router-1.tls]
       passthrough = true
   [tcp.routers.Router-2]
-    rule = "HostSNI(`cockroach1.cmapi.rx-c16.app.corpintra.net`)"
-    service = "cockroach2"
+    rule = "HostSNI(`mongo0-0.rx-system`)"
+    service = "mongo"
     [tcp.routers.Router-2.tls]
       passthrough = true
 
@@ -20,6 +20,6 @@
     [[tcp.services.cockroach.loadBalancer.servers]]
       address = "localhost:26257"
 
-  [tcp.services.cockroach2.loadBalancer]
-    [[tcp.services.cockroach2.loadBalancer.servers]]
-      address = "localhost:26255"
+  [tcp.services.mongo.loadBalancer]
+    [[tcp.services.mongo.loadBalancer.servers]]
+      address = "localhost:27017"

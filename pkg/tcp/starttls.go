@@ -1,27 +1,21 @@
 package tcp
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 
 	"github.com/containous/traefik/v2/pkg/log"
 )
 
 var (
-	postgresStartTLSMsgLen = []byte{0, 0, 0, 8}     //8
-	postgresStartTLSMsg    = []byte{4, 210, 22, 47} //80877103
-	postgresStartTLSReply  = []byte{83}             //S
+	postgresStartTLSMsg   = []byte{0, 0, 0, 8, 4, 210, 22, 47} //int32(8) + int32(80877103)
+	postgresStartTLSReply = []byte{83}                         //S
 )
 
 func imposeStartTLSPostgresClient(conn WriteCloser) error {
 
-	_, err := conn.Write(postgresStartTLSMsgLen)
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.Write(postgresStartTLSMsg)
+	_, err := conn.Write(postgresStartTLSMsg)
 	if err != nil {
 		return err
 	}
@@ -38,35 +32,53 @@ func imposeStartTLSPostgresClient(conn WriteCloser) error {
 	return nil
 }
 
-func imposeStartTLSPostgresServer(conn WriteCloser) error {
+func imposeStartTLSPostgresServer(conn WriteCloser) (string, error) {
 
-	log.Debug("starting starttls")
+	startTLSConn := newStartTLSConn(conn)
 
-	buf := make([]byte, 4)
-	_, err := io.ReadFull(conn, buf)
+	buf, err := startTLSConn.Peek(len(postgresStartTLSMsg))
 	if err != nil {
-		log.Fatal(err)
-	}
-	if !bytes.Equal(buf, postgresStartTLSMsgLen) {
-		return fmt.Errorf("unexpected msg length in starttls handshake got: %v expected: %v", buf, postgresStartTLSMsgLen)
+		return "", err
 	}
 
-	log.Debug("got %v", buf)
-
-	_, err = io.ReadFull(conn, buf)
-	if err != nil {
-		log.Fatal(err)
-	}
 	if !bytes.Equal(buf, postgresStartTLSMsg) {
-		return fmt.Errorf("unexpected data in starttls handshake got: %v", buf)
+		log.Debug("doesn't seem to be postgres StartTLS handshake .. skipping")
+		return startTLSConn.getPeeked(), nil
 	}
-	log.Debug("got %v", buf)
+
+	//consume the bytes that we just peeked so far..
+	startTLSConn.Read(buf)
 
 	_, err = conn.Write(postgresStartTLSReply)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Debug("end starttls")
-	return nil
+	return startTLSConn.getPeeked(), nil
+}
+
+type startTLSConn struct {
+	br *bufio.Reader
+	WriteCloser
+}
+
+func newStartTLSConn(conn WriteCloser) startTLSConn {
+	return startTLSConn{bufio.NewReader(conn), conn}
+}
+
+func (s startTLSConn) Peek(n int) ([]byte, error) {
+	return s.br.Peek(n)
+}
+
+func (s startTLSConn) Read(p []byte) (int, error) {
+	return s.br.Read(p)
+}
+
+func (s startTLSConn) getPeeked() string {
+	peeked, err := s.br.Peek(s.br.Buffered())
+	if err != nil {
+		log.Errorf("Could not get anything: %s", err)
+		return ""
+	}
+	return string(peeked)
 }

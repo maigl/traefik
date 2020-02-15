@@ -34,11 +34,13 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 		return
 	}
 
-	err := imposeStartTLSPostgresServer(conn)
+	peeked, err := imposeStartTLSPostgresServer(conn)
 	if err != nil {
 		log.Error("Error while starttls handshake: %v", err)
 		return
 	}
+
+	conn = r.GetConn(conn, peeked)
 
 	br := bufio.NewReader(conn)
 	serverName, tls, peeked, err := clientHelloServerName(br)
