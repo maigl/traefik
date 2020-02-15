@@ -12,16 +12,19 @@ import (
 type Proxy struct {
 	target           *net.TCPAddr
 	terminationDelay time.Duration
+
+	//startTLS defines which StartTLS handshake will be used.
+	startTLS string
 }
 
 // NewProxy creates a new Proxy
-func NewProxy(address string, terminationDelay time.Duration) (*Proxy, error) {
+func NewProxy(address string, terminationDelay time.Duration, startTLS string) (*Proxy, error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay}, nil
+	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay, startTLS: startTLS}, nil
 }
 
 // ServeTCP forwards the connection to a service
@@ -37,10 +40,13 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 		return
 	}
 
-	err = imposeStartTLSPostgresClient(connBackend)
-	if err != nil {
-		log.Error("Error while starttls handshake: %v", err)
-		return
+	switch p.startTLS {
+	case "postgres":
+		err := imposeStartTLSPostgresClient(connBackend)
+		if err != nil {
+			log.Error("Error while starttls handshake: %v", err)
+			return
+		}
 	}
 
 	// maybe not needed, but just in case

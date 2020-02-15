@@ -14,6 +14,8 @@
 
 ## Dynamic configuration
 [tcp.services]
+  [tcp.services.cockroach]
+    startTLS = "postgres"
   [tcp.services.cockroach.loadBalancer]
     [[tcp.services.cockroach.loadBalancer.servers]]
       address = "localhost:26257"
