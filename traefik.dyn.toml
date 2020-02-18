@@ -7,7 +7,7 @@
     [tcp.routers.Router-1.tls]
       passthrough = true
   [tcp.routers.Router-2]
-    rule = "HostSNI(`mongo0-0.rx-system`)"
+    rule = "HostSNI(`mongo-0.mongo`)"
     service = "mongo"
     [tcp.routers.Router-2.tls]
       passthrough = true

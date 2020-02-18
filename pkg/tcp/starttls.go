@@ -13,7 +13,12 @@ var (
 	postgresStartTLSReply = []byte{83}                         //S
 )
 
-func imposeStartTLSPostgresClient(conn WriteCloser) error {
+// invokeStartTLSPostgresHandshake performs the postgres StartTLS
+// handshake (client side). It sends the postgresStartTLSMsg
+// and checkes if the server response matches the expected value.
+// It returns an error on read/write failures on the connection
+// or if the server response doesn't match.
+func invokeStartTLSPostgresHandshake(conn WriteCloser) error {
 
 	_, err := conn.Write(postgresStartTLSMsg)
 	if err != nil {
@@ -32,18 +37,31 @@ func imposeStartTLSPostgresClient(conn WriteCloser) error {
 	return nil
 }
 
-func imposeStartTLSPostgresServer(conn WriteCloser) (string, error) {
+// handleStartTLSHandshake performs a StartTLS Handshake (server side)
+// It peeks some into some bytes of conn and
+// tries to find out if the client performs a StartTLS handshake.
+// If the client request does contain a StartTLS handshake signature
+// the handshake is performed. After this step the client will
+// start a TLS session.
+// If no StartTLS signature is found the bytes of the connection
+// are unmodified.
+// In any case the caller must use the returned WriteCloser for
+// further read/write operations.
+// An error is retured if reading or writing to the WriteCloser fails.
+//
+// BEWARE: currently only postgres startTLS handshake flavor is currently implemented.
+func handleStartTLSHandshake(conn WriteCloser) (WriteCloser, error) {
 
 	startTLSConn := newStartTLSConn(conn)
 
 	buf, err := startTLSConn.Peek(len(postgresStartTLSMsg))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if !bytes.Equal(buf, postgresStartTLSMsg) {
 		log.Debug("doesn't seem to be postgres StartTLS handshake .. skipping")
-		return startTLSConn.getPeeked(), nil
+		return startTLSConn, nil
 	}
 
 	//consume the bytes that we just peeked so far..
@@ -51,10 +69,10 @@ func imposeStartTLSPostgresServer(conn WriteCloser) (string, error) {
 
 	_, err = conn.Write(postgresStartTLSReply)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return startTLSConn.getPeeked(), nil
+	return startTLSConn, nil
 }
 
 type startTLSConn struct {
@@ -72,13 +90,4 @@ func (s startTLSConn) Peek(n int) ([]byte, error) {
 
 func (s startTLSConn) Read(p []byte) (int, error) {
 	return s.br.Read(p)
-}
-
-func (s startTLSConn) getPeeked() string {
-	peeked, err := s.br.Peek(s.br.Buffered())
-	if err != nil {
-		log.Errorf("Could not get anything: %s", err)
-		return ""
-	}
-	return string(peeked)
 }

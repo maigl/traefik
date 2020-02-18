@@ -42,9 +42,9 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 
 	switch p.startTLS {
 	case "postgres":
-		err := imposeStartTLSPostgresClient(connBackend)
+		err := invokeStartTLSPostgresHandshake(connBackend)
 		if err != nil {
-			log.Error("Error while starttls handshake: %v", err)
+			log.Errorf("Error while starttls handshake: %v", err)
 			return
 		}
 	}

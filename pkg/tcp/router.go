@@ -34,13 +34,16 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 		return
 	}
 
-	peeked, err := imposeStartTLSPostgresServer(conn)
+	// this peeks into the connection and tries to perform the
+	// starttls handshake (postgres). It works in both cases,
+	// no matter if the client sends StartTLS header
+	// but still I'm not sure if this should better be optional
+	// and be configurable in some config settings.
+	conn, err := handleStartTLSHandshake(conn)
 	if err != nil {
-		log.Error("Error while starttls handshake: %v", err)
+		log.WithoutContext().Errorf("Error on starttls handshake: %v", err)
 		return
 	}
-
-	conn = r.GetConn(conn, peeked)
 
 	br := bufio.NewReader(conn)
 	serverName, tls, peeked, err := clientHelloServerName(br)
