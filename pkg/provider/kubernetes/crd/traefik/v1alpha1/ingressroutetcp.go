@@ -50,6 +50,7 @@ type ServiceTCP struct {
 	Port             int32  `json:"port"`
 	Weight           *int   `json:"weight,omitempty"`
 	TerminationDelay *int   `json:"terminationDelay,omitempty"`
+	StartTLS         string `json:"startTLS"`
 }
 
 // +genclient

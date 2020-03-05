@@ -143,6 +143,7 @@ func createLoadBalancerServerTCP(client Client, namespace string, service v1alph
 		LoadBalancer: &dynamic.TCPServersLoadBalancer{
 			Servers: servers,
 		},
+		StartTLS: service.StartTLS,
 	}
 
 	if service.TerminationDelay != nil {
