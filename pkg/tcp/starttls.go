@@ -20,6 +20,8 @@ var (
 // or if the server response doesn't match.
 func invokeStartTLSPostgresHandshake(conn WriteCloser) error {
 
+	log.Debug("dreggn starttls handshake with target ")
+
 	_, err := conn.Write(postgresStartTLSMsg)
 	if err != nil {
 		return err
@@ -71,6 +73,8 @@ func handleStartTLSHandshake(conn WriteCloser) (WriteCloser, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debug("dreggn part1 successful")
 
 	return startTLSConn, nil
 }

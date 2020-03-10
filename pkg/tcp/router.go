@@ -52,6 +52,8 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 		return
 	}
 
+	log.Debugf("got sni from request %v", serverName)
+
 	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
 	err = conn.SetReadDeadline(time.Time{})
 	if err != nil {

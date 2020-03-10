@@ -40,14 +40,18 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 		return
 	}
 
-	switch p.startTLS {
-	case "postgres":
-		err := invokeStartTLSPostgresHandshake(connBackend)
-		if err != nil {
-			log.Errorf("Error while starttls handshake: %v", err)
-			return
-		}
+	log.Debug("dreggn connecting to target", p.target)
+
+	//switch p.startTLS {
+
+	log.Debug("dreggn connecting to target", p.target)
+	//case "postgres":
+	err = invokeStartTLSPostgresHandshake(connBackend)
+	if err != nil {
+		log.Errorf("Error while starttls handshake: %v", err)
+		return
 	}
+	//}
 
 	// maybe not needed, but just in case
 	defer connBackend.Close()

@@ -2,7 +2,7 @@
 # Dynamic configuration
 [tcp.routers]
   [tcp.routers.Router-1]
-    rule = "HostSNI(`cockroach.cmapi.rx-c16.app.corpintra.net`)"
+    rule = "HostSNI(`postgres.sni.rx-c16.app.corpintra.net`)"
     service = "cockroach"
     [tcp.routers.Router-1.tls]
       passthrough = true
@@ -18,7 +18,7 @@
     startTLS = "postgres"
   [tcp.services.cockroach.loadBalancer]
     [[tcp.services.cockroach.loadBalancer.servers]]
-      address = "localhost:26257"
+      address = "localhost:64000"
 
   [tcp.services.mongo.loadBalancer]
     [[tcp.services.mongo.loadBalancer.servers]]
